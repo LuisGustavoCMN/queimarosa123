@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>TRABALHO DE WEB - SISTEMA DE LIVROS</title>
+</head>
+<body bgcolor="#e6f2ff"> 
+    <center>
+        <h1>📚 SISTEMA DE CONTROLE DE LIVROS 📚</h1>
+        <p><b>Autor:</b> Aluno Nota 7 (Turma de Sexta-Feira)</p>
+    </center>
+    
+    <hr>
+
+    <h2>1. Listar Todos os Livros (GET)</h2>
+    <button onclick="carregarLivros()">APERTAR PARA CARREGAR LIVROS</button>
+    <br><br>
+    <table border="1" cellpadding="5" id="tabela-livros">
+        <thead>
+            <tr bgcolor="#cccccc">
+                <th>ID</th>
+                <th>Título</th>
+                <th>Autor</th>
+                <th>Ano</th>
+                <th>Editora</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="corpo-tabela">
+            <tr>
+                <td colspan="6" align="center">Nenhum livro carregado ainda... clique no botao acima!</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <h2>2. Cadastrar Novo Livro (POST)</h2>
+    <form id="form-cadastro" onsubmit="cadastrarLivro(event)">
+        <label>Título do Livro:</label><br>
+        <input type="text" id="post-titulo" required size="40"><br><br>
+        
+        <label>Autor:</label><br>
+        <input type="text" id="post-autor" required><br><br>
+        
+        <label>Ano de Lançamento:</label><br>
+        <input type="number" id="post-ano" required><br><br>
+        
+        <label>Editora (Se for da Santa Monica Studios deixa assim):</label><br>
+        <input type="text" id="post-editora" value="Santa Monica Studios"><br><br>
+        
+        <button type="submit" style="background-color: lightgreen;">SALVAR LIVRO NOVO</button>
+    </form>
+
+    <hr>
+
+    <h2>3. Editar / Atualizar Livro (PUT / PATCH)</h2>
+    <p>Digite o ID do livro para buscar e carregar no formulário abaixo:</p>
+    <input type="number" id="busca-id" placeholder="ID do livro">
+    <button onclick="buscarParaEditar()">Buscar para Editar</button>
+    
+    <br><br>
+    
+    <div id="area-edicao" style="border: 1px dashed black; padding: 10px; background-color: #ffffe0; width: 400px;">
+        <h4>Formulário de Edição (ID do Livro: <span id="edit-id-label">-</span>)</h4>
+        <input type="hidden" id="edit-id">
+        
+        <label>Título:</label><br>
+        <input type="text" id="edit-titulo"><br>
+        <label>Autor:</label><br>
+        <input type="text" id="edit-autor"><br>
+        <label>Ano:</label><br>
+        <input type="number" id="edit-ano"><br>
+        <label>Editora:</label><br>
+        <input type="text" id="edit-editora"><br><br>
+        
+        <button onclick="atualizarLivroPUT()">Atualizar Tudo (PUT)</button>
+        <button onclick="atualizarLivroPATCH()">Modificar Só o que Mudei (PATCH)</button>
+    </div>
+
+    <hr>
+    <center>
+        <p><i>Fim do trabalho. Professor pfv nao tira ponto do visual, o importante é o backend funcionar.</i></p>
+    </center>
+
+    <script>
+        const API_URL = 'http://localhost:3000/livros';
+
+        function carregarLivros() {
+            fetch(API_URL)
+                .then(res => res.json())
+                .then(dados => {
+                    const tbody = document.getElementById('corpo-tabela');
+                    tbody.innerHTML = ''; 
+
+                    dados.forEach(livro => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${livro.id}</td>
+                                <td><b>${livro.titulo}</b></td>
+                                <td>${livro.autor}</td>
+                                <td>${livro.ano}</td>
+                                <td>${livro.editora}</td>
+                                <td>
+                                    <button onclick="deletarLivro(${livro.id})" style="background-color: red; color: white;">DELETAR</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                })
+                .catch(erro => alert('Erro ao listar livros! Sua API tá rodando no terminal?'));
+        }
+
+        function cadastrarLivro(event) {
+            event.preventDefault();
+
+            const novoLivro = {
+                titulo: document.getElementById('post-titulo').value,
+                autor: document.getElementById('post-autor').value,
+                ano: parseInt(document.getElementById('post-ano').value),
+                editora: document.getElementById('post-editora').value
+            };
+
+            fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(novoLivro)
+            })
+            .then(res => {
+                if(res.status === 201) {
+                    alert('Livro adicionado!');
+                    document.getElementById('form-cadastro').reset();
+                    carregarLivros(); 
+                }
+            })
+            .catch(erro => alert('Erro no cadastro.'));
+        }
+
+        function buscarParaEditar() {
+            const id = document.getElementById('busca-id').value;
+            if(!id) return alert('Bota um ID válido aí!');
+
+            fetch(`${API_URL}/${id}`)
+                .then(res => {
+                    if (res.status === 404) throw new Error('Livro sumido ou não existe!');
+                    return res.json();
+                })
+                .then(livro => {
+                    document.getElementById('edit-id').value = livro.id;
+                    document.getElementById('edit-id-label').innerText = livro.id;
+                    document.getElementById('edit-titulo').value = livro.titulo;
+                    document.getElementById('edit-autor').value = livro.autor;
+                    document.getElementById('edit-ano').value = livro.ano;
+                    document.getElementById('edit-editora').value = livro.editora;
+                })
+                .catch(erro => alert(erro.message));
+        }
+
+        function atualizarLivroPUT() {
+            const id = document.getElementById('edit-id').value;
+            if(!id) return alert('Busca o livro primeiro antes de salvar!');
+
+            const dados = {
+                titulo: document.getElementById('edit-titulo').value,
+                autor: document.getElementById('edit-autor').value,
+                ano: parseInt(document.getElementById('edit-ano').value),
+                editora: document.getElementById('edit-editora').value
+            };
+
+            fetch(`${API_URL}/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dados)
+            })
+            .then(res => res.json())
+            .then(() => {
+                alert('Atualizado tudo via PUT!');
+                carregarLivros();
+            });
+        }
+
+        function atualizarLivroPATCH() {
+            const id = document.getElementById('edit-id').value;
+            if(!id) return alert('Busca o livro primeiro!');
+
+            const dados = {};
+            if(document.getElementById('edit-titulo').value) dados.titulo = document.getElementById('edit-titulo').value;
+            if(document.getElementById('edit-autor').value) dados.autor = document.getElementById('edit-autor').value;
+            if(document.getElementById('edit-ano').value) dados.ano = parseInt(document.getElementById('edit-ano').value);
+            if(document.getElementById('edit-editora').value) dados.editora = document.getElementById('edit-editora').value;
+
+            fetch(`${API_URL}/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dados)
+            })
+            .then(res => res.json())
+            .then(() => {
+                alert('Modificado via PATCH!');
+                carregarLivros();
+            });
+        }
+
+        function deletarLivro(id) {
+            if(confirm('Vai deletar mesmo o ID ' + id + '?')) {
+                fetch(`${API_URL}/${id}`, { method: 'DELETE' })
+                .then(res => {
+                    if(res.status === 204) {
+                        alert('Deletado com sucesso!');
+                        carregarLivros();
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
