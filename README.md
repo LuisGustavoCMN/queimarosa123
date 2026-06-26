@@ -1,10 +1,10 @@
-#BOOKS MANAGER
+# BOOKS MANAGER
 
 >This is a school project about APIs using Express methods
 
 ---
 
-##INDEX
+## INDEX
 
 1. How to use it?
 2. Archives
@@ -12,7 +12,7 @@
 4. Index.html
 5. Jsons
 
-##1. How to use it?
+## 1. How to use it?
 
 >Downloand the zip archive of the project and extracts in a folder
 >Then, open int it VS CODE and use the following codes in the terminal to acess the books manager page
@@ -21,6 +21,6 @@
 ```node app.js```
 >Now, press F5 in ```index.html``` archive to see the books manager page
 
-##2. Primary archives
+## 2. Primary archives
 
 >
